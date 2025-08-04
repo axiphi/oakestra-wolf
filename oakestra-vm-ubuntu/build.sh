@@ -16,4 +16,4 @@ curl \
   | xzcat \
   | docker import --platform "linux/${ARCH}" - "axiphi/oakestra-vm-ubuntu-raw:${VERSION}"
 
-docker build --platform "linux/${ARCH}" --tag "axiphi/oakestra-vm-ubuntu:${VERSION}" --build-arg "VERSION=${VERSION}" .
+docker build --load --platform "linux/${ARCH}" --tag "axiphi/oakestra-vm-ubuntu:${VERSION}" --build-arg "VERSION=${VERSION}" .
