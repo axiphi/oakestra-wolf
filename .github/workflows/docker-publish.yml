@@ -51,6 +51,8 @@ jobs:
         uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
         with:
           context: "{{defaultContext}}:oakestra-vm-wolf"
+          build-args:
+            - "UBUNTU_VERSION=${{ env.UBUNTU_VERSION }}"
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

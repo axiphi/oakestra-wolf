@@ -1,4 +1,6 @@
-FROM oakestra/vm-ubuntu:25.04
+ARG UBUNTU_VERSION
+
+FROM axiphi/oakestra-vm-ubuntu:${UBUNTU_VERSION}
 
 # install docker
 RUN export DEBIAN_FRONTEND=noninteractive \

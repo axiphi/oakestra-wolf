@@ -14,6 +14,6 @@ curl \
     --location \
     "https://cloud-images.ubuntu.com/releases/${VERSION}/release/ubuntu-${VERSION}-server-cloudimg-${ARCH}-root.tar.xz" \
   | xzcat \
-  | docker import --arch "$ARCH" - "axiphi/oakestra-vm-ubuntu-raw:${VERSION}"
+  | docker import --platform "linux/${ARCH}" - "axiphi/oakestra-vm-ubuntu-raw:${VERSION}"
 
-docker build --arch "$ARCH" --tag "axiphi/oakestra-vm-ubuntu:${VERSION}" --build-arg "VERSION=${VERSION}" .
+docker build --platform "linux/${ARCH}" --tag "axiphi/oakestra-vm-ubuntu:${VERSION}" --build-arg "VERSION=${VERSION}" .
