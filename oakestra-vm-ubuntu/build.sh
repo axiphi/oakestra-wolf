@@ -19,5 +19,5 @@ curl \
 echo "Imported ubuntu cloud image"
 
 echo "Building ubuntu VM base image..."
-docker buildx build --load --platform "linux/${ARCH}" --tag "axiphi/oakestra-vm-ubuntu:${VERSION}" --build-arg "VERSION=${VERSION}" .
+docker build --platform "linux/${ARCH}" --tag "axiphi/oakestra-vm-ubuntu:${VERSION}" --build-arg "VERSION=${VERSION}" .
 echo "Built ubuntu VM base image"
