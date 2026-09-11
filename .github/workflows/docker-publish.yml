@@ -7,6 +7,7 @@ on:
 
 env:
   VERSION: "26.04"
+  REGISTRY: "ghcr.io"
   UBUNTU_IMAGE: "axiphi/oakestra-vm-ubuntu"
   MESA_IMAGE: "axiphi/oakestra-vm-mesa"
   WOLF_IMAGE: "axiphi/oakestra-vm-wolf"
@@ -16,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      packages: write
 
     steps:
       - name: Checkout repository
@@ -32,11 +34,12 @@ jobs:
               }
             }
 
-      - name: Login to Docker Hub
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
         with:
-          username: ${{ vars.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -77,5 +80,7 @@ jobs:
 
       - name: Push multi-architecture images
         run: |
-          docker push "${MESA_IMAGE}:${VERSION}"
-          docker push "${WOLF_IMAGE}:${VERSION}"
+          docker tag "${MESA_IMAGE}:${VERSION}" "${REGISTRY}/${MESA_IMAGE}:${VERSION}"
+          docker tag "${WOLF_IMAGE}:${VERSION}" "${REGISTRY}/${WOLF_IMAGE}:${VERSION}"
+          docker push "${REGISTRY}/${MESA_IMAGE}:${VERSION}"
+          docker push "${REGISTRY}/${WOLF_IMAGE}:${VERSION}"
