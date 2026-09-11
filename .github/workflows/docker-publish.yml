@@ -50,7 +50,7 @@ jobs:
 
       - name: Import multi-architecture Ubuntu cloud image
         working-directory: ./oakestra-vm-ubuntu
-        run: ./import-raw.sh docker "${VERSION}" linux/amd64 linux/arm64/v8
+        run: ./import-raw.sh docker "${VERSION}" linux/amd64 linux/arm64
 
       - name: Build multi-architecture Ubuntu VM base image
         working-directory: ./oakestra-vm-ubuntu
@@ -66,7 +66,7 @@ jobs:
         working-directory: ./oakestra-vm-mesa
         run: |
           docker build \
-            --platform linux/amd64,linux/arm64/v8 \
+            --platform linux/amd64,linux/arm64 \
             --load \
             --tag "${MESA_IMAGE}:${VERSION}" \
             --build-arg "VERSION=${VERSION}" \
@@ -76,7 +76,7 @@ jobs:
         working-directory: ./oakestra-vm-wolf
         run: |
           docker build \
-            --platform linux/amd64,linux/arm64/v8 \
+            --platform linux/amd64,linux/arm64 \
             --load \
             --tag "${WOLF_IMAGE}:${VERSION}" \
             --build-arg "VERSION=${VERSION}" \
