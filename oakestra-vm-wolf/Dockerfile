@@ -1,6 +1,6 @@
-ARG UBUNTU_VERSION
+ARG VERSION
 
-FROM axiphi/oakestra-vm-ubuntu:${UBUNTU_VERSION}
+FROM axiphi/oakestra-vm-mesa:${VERSION}
 
 # install docker
 RUN export DEBIAN_FRONTEND=noninteractive \
