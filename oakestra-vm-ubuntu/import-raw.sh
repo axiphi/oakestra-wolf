@@ -63,7 +63,12 @@ for platform in "${PLATFORMS[@]}"; do
             ;;
     esac
 
-    platform_image="${IMAGE}-${platform//\//-}"
+    # BuildKit normalizes linux/arm64/v8 to linux/arm64 and leaves TARGETVARIANT empty.
+    platform_tag="${os}-${arch}"
+    if [[ -n ${variant} && ! ( ${arch} == arm64 && ${variant} == v8 ) ]]; then
+        platform_tag+="-${variant}"
+    fi
+    platform_image="${IMAGE}-${platform_tag}"
     PLATFORM_IMAGES+=("${platform_image}")
     url="https://cloud-images.ubuntu.com/releases/${VERSION}/release/ubuntu-${VERSION}-server-cloudimg-${arch}-root.tar.xz"
 
