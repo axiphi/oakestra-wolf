@@ -2,31 +2,27 @@ name: Docker
 
 on:
   push:
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
-      - "v[0-9]+.[0-9]+.[0-9]+-[a-zA-Z0-9]+"
-      - "v[0-9]+.[0-9]+.[0-9]+-[a-zA-Z0-9]+.[0-9]+"
+    branches:
+      - main
 
 env:
-  UBUNTU_VERSION: "25.04"
-  ARCH: "amd64"
-  REGISTRY: "ghcr.io"
-  IMAGE_NAME: "axiphi/oakestra-vm-wolf"
+  VERSION: "26.04"
+  UBUNTU_IMAGE: "axiphi/oakestra-vm-ubuntu"
+  MESA_IMAGE: "axiphi/oakestra-vm-mesa"
+  WOLF_IMAGE: "axiphi/oakestra-vm-wolf"
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
-      id-token: write
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Docker
-        uses: docker/setup-docker-action@v4
+        uses: docker/setup-docker-action@v5
         with:
           daemon-config: |
             {
@@ -36,33 +32,50 @@ jobs:
               }
             }
 
-      - name: Log into registry ${{ env.REGISTRY }}
-        uses: docker/login-action@v3
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: type=semver,pattern={{version}}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
 
-      - name: Build base image
-        id: base-image
+      - name: Import multi-architecture Ubuntu cloud image
         working-directory: ./oakestra-vm-ubuntu
-        run: ./build.sh ${{ env.ARCH }} ${{ env.UBUNTU_VERSION }}
-        
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: "{{defaultContext}}:oakestra-vm-wolf"
-          build-args: "UBUNTU_VERSION=${{ env.UBUNTU_VERSION }}"
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          platforms: "linux/${{ env.ARCH }}"
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+        run: ./import-raw.sh docker "${VERSION}" linux/amd64 linux/arm64/v8
+
+      - name: Build multi-architecture Ubuntu VM base image
+        working-directory: ./oakestra-vm-ubuntu
+        run: |
+          docker build \
+            --platform linux/amd64,linux/arm64/v8 \
+            --load \
+            --tag "${UBUNTU_IMAGE}:${VERSION}" \
+            --build-arg "VERSION=${VERSION}" \
+            .
+
+      - name: Build multi-architecture Mesa image
+        working-directory: ./oakestra-vm-mesa
+        run: |
+          docker build \
+            --platform linux/amd64,linux/arm64/v8 \
+            --load \
+            --tag "${MESA_IMAGE}:${VERSION}" \
+            --build-arg "VERSION=${VERSION}" \
+            .
+
+      - name: Build multi-architecture Wolf image
+        working-directory: ./oakestra-vm-wolf
+        run: |
+          docker build \
+            --platform linux/amd64,linux/arm64/v8 \
+            --load \
+            --tag "${WOLF_IMAGE}:${VERSION}" \
+            --build-arg "VERSION=${VERSION}" \
+            .
+
+      - name: Push multi-architecture images
+        run: |
+          docker push "${MESA_IMAGE}:${VERSION}"
+          docker push "${WOLF_IMAGE}:${VERSION}"
