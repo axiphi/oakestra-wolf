@@ -45,8 +45,6 @@ esac
 IMAGE="axiphi/oakestra-vm-ubuntu-raw:${VERSION}"
 PLATFORM_IMAGES=()
 
-"${CONTAINER_ENGINE}" manifest rm "${IMAGE}" 2>/dev/null || true
-
 for platform in "${PLATFORMS[@]}"; do
     IFS=/ read -r os arch variant extra <<< "${platform}"
     if [[ -z ${os} || -z ${arch} || -n ${extra} ]]; then
@@ -85,6 +83,26 @@ for platform in "${PLATFORMS[@]}"; do
     fi
 done
 
-"${CONTAINER_ENGINE}" manifest create "${IMAGE}" "${PLATFORM_IMAGES[@]}"
+if [[ ${CONTAINER_ENGINE} == docker ]]; then
+    platforms_csv=$(IFS=,; echo "${PLATFORMS[*]}")
+
+    docker build \
+        --platform "${platforms_csv}" \
+        --build-arg "RAW_IMAGE=${IMAGE}" \
+        --tag "${IMAGE}" \
+        --file - \
+        --load \
+        . <<'EOF'
+# Docker warns about global arguments used by FROM when they have no valid default.
+ARG RAW_IMAGE
+ARG TARGETOS
+ARG TARGETARCH
+ARG TARGETVARIANT
+FROM ${RAW_IMAGE:-nowarn}-${TARGETOS:-nowarn}-${TARGETARCH:-nowarn}${TARGETVARIANT:+-${TARGETVARIANT}}
+EOF
+else
+    podman manifest rm "${IMAGE}" 2>/dev/null || true
+    podman manifest create "${IMAGE}" "${PLATFORM_IMAGES[@]}"
+fi
 
 echo "Created multi-architecture raw image ${IMAGE}"
